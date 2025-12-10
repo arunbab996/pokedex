@@ -1,4 +1,4 @@
-/* Extra animations & tweaks for the Pokédex */
+/* Extra animations & tweaks for the Pokédex web app */
 
 @keyframes cardFlip {
   0% {
@@ -34,7 +34,18 @@
   }
 }
 
-.scan-line {
+.scan-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-overlay::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  top: -80px;
   animation: scanLine 0.9s ease-out;
   background: linear-gradient(
     180deg,
@@ -44,13 +55,11 @@
   );
 }
 
-/* Simple scrollbar styling inside the dark screen */
-#dataScreen::-webkit-scrollbar,
-#portraitScreen::-webkit-scrollbar {
+/* scrollbars for grid */
+#gridContainer::-webkit-scrollbar {
   width: 6px;
 }
-#dataScreen::-webkit-scrollbar-thumb,
-#portraitScreen::-webkit-scrollbar-thumb {
+#gridContainer::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.7);
   border-radius: 999px;
 }
