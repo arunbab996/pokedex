@@ -8,11 +8,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="./pokedex.css" />
 </head>
-<body class="h-screen overflow-hidden bg-slate-950 text-slate-50">
-  <!-- Center the Pokédex device, make it fill the screen -->
-  <div class="h-full flex items-center justify-center px-3 sm:px-4 py-3">
+<body class="min-h-screen bg-slate-950 text-slate-50">
+  <!-- Center the Pokédex device; allow page scroll on very small screens -->
+  <div class="min-h-screen flex items-center justify-center px-3 sm:px-4 py-4">
     <!-- Outer red shell -->
-    <div class="w-full h-full max-w-5xl bg-gradient-to-b from-red-600 to-red-800 rounded-[2.25rem] border-[10px] border-red-900 shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-3 sm:p-4 flex flex-col">
+    <div class="w-full max-w-5xl bg-gradient-to-b from-red-600 to-red-800 rounded-[2.25rem] border-[10px] border-red-900 shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-3 sm:p-4 flex flex-col">
       <!-- Top lens + LEDs -->
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-3">
@@ -175,7 +175,7 @@
           class="hidden p-3 rounded-2xl border border-red-400 bg-red-900/80 text-red-50 text-sm"
         ></div>
 
-        <!-- MAIN SCREEN AREA: two panels side by side on desktop, stacked on phone, both bounded in height -->
+        <!-- MAIN SCREEN AREA -->
         <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-3 mt-1">
           <!-- LEFT: Pokémon entry screen -->
           <section class="flex flex-col bg-slate-900 rounded-2xl border border-slate-700 shadow-[0_0_30px_rgba(15,23,42,0.9)] p-3">
@@ -184,7 +184,6 @@
               <span class="font-mono text-sky-300">SCAN READY</span>
             </div>
 
-            <!-- Scrollable internal area -->
             <div
               id="mainCard"
               class="flex-1 min-h-0 rounded-xl bg-slate-950/70 border border-slate-700 px-3 sm:px-4 py-3 overflow-y-auto text-sm sm:text-base text-slate-100"
