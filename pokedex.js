@@ -21,7 +21,7 @@ const TYPE_META = {
   fairy: { label: "Fairy", emoji: "🧚", bg: "from-pink-100 to-pink-300 text-gray-900" }
 };
 
-// Softer frame colours
+// softer pastel frame around art card
 const TYPE_FRAME = {
   fire: "border-orange-200",
   water: "border-sky-200",
@@ -34,7 +34,7 @@ const TYPE_FRAME = {
   fairy: "border-pink-200"
 };
 
-// Uniform stat labels
+// uniform stat labels
 const STAT_LABELS = {
   hp: "HP",
   attack: "Attack",
@@ -76,7 +76,7 @@ let isLoading = false;
 let isLoadingRegion = false;
 let suggestIndex = -1;
 
-// dom elements
+// dom
 let searchForm,
   searchInput,
   searchBtn,
@@ -85,9 +85,8 @@ let searchForm,
   randomBtn,
   clearBtn,
   errorBox,
-  mainSection,
   mainCard,
-  gridSection,
+  pokemonDataPanel,
   gridContainer,
   loadMoreBtn,
   statusRegion,
@@ -159,7 +158,6 @@ function setLoading(flag) {
   }
 }
 
-// helpers to render pieces
 function createTypeBadges(types) {
   return types
     .map((t) => {
@@ -207,10 +205,11 @@ function renderStatus() {
   if (statusEntries) statusEntries.textContent = entryCountLabel;
 }
 
+/**
+ * Left screen: art + name + types + evolution strip
+ */
 function renderMainCard() {
   if (!mainCard) return;
-  renderStatus();
-  if (mainSection) mainSection.classList.remove("hidden");
 
   if (!currentPokemon) {
     mainCard.innerHTML = `
@@ -227,43 +226,6 @@ function renderMainCard() {
 
   const primaryType = currentPokemon.types[0];
   const frameClass = TYPE_FRAME[primaryType] || "border-slate-200";
-
-  const abilitiesHtml = currentPokemon.abilities
-    .map(
-      (a) =>
-        `<span class="px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold capitalize bg-slate-50 border border-slate-200">
-          ✨ ${a.name}${a.hidden ? " (hidden)" : ""}
-        </span>`
-    )
-    .join("");
-
-  const statsHtml = currentPokemon.stats
-    .map((s) => {
-      const label = STAT_LABELS[s.name] || capitalize(s.name);
-      return `
-      <div class="flex items-center gap-3">
-        <div class="w-28 text-xs sm:text-sm text-slate-700 font-semibold">${label}</div>
-        <div class="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
-          <div
-            class="h-2 rounded-full"
-            style="width:${Math.min(100, (s.value / 255) * 100)}%; background:linear-gradient(90deg,#22c55e,#16a34a);"
-          ></div>
-        </div>
-        <div class="w-10 text-right font-mono text-xs text-slate-800">${s.value}</div>
-      </div>`;
-    })
-    .join("");
-
-  const movesHtml = currentPokemon.moves
-    .slice(0, 10)
-    .map(
-      (m) => `
-      <div class="px-2 py-1 rounded-xl border border-pink-100 text-[11px] sm:text-xs capitalize bg-gradient-to-br from-white to-pink-50 shadow-sm flex items-center gap-2">
-        <span class="text-xs">⚡</span>
-        <span class="truncate">${m}</span>
-      </div>`
-    )
-    .join("");
 
   const evoHtml =
     currentPokemon.evolutions && currentPokemon.evolutions.length
@@ -294,12 +256,11 @@ function renderMainCard() {
       : `<div class="text-xs text-slate-400">No evolution data</div>`;
 
   mainCard.innerHTML = `
-    <div class="grid md:grid-cols-2 gap-5 items-stretch">
-      <!-- left: image + basic -->
+    <div class="flex flex-col gap-4 w-full">
       <div class="flex flex-col items-center justify-center">
-        <div class="w-full max-w-xs mx-auto bg-white rounded-3xl shadow-xl border-2 ${frameClass} card-flip">
+        <div class="w-full max-w-sm mx-auto bg-white rounded-3xl shadow-xl border-2 ${frameClass}">
           <div class="p-4 bg-gradient-to-b from-white to-slate-50 flex flex-col items-center">
-            <div class="w-full h-48 flex items-center justify-center">
+            <div class="w-full h-52 flex items-center justify-center">
               ${
                 currentPokemon.sprite
                   ? `<img src="${currentPokemon.sprite}" alt="${currentPokemon.name}" class="w-full h-full object-contain drop-shadow-xl" />`
@@ -321,48 +282,13 @@ function renderMainCard() {
         </div>
       </div>
 
-      <!-- right: details -->
-      <div class="flex flex-col gap-4 text-xs sm:text-sm text-slate-700">
-        <div class="flex flex-wrap gap-3">
-          <div class="px-3 py-2 rounded-2xl bg-amber-50 border border-amber-200 min-w-[100px] text-center">
-            <div class="text-[11px] text-amber-700 font-semibold">Height</div>
-            <div class="text-lg font-extrabold text-amber-800 mt-1">${currentPokemon.height} dm</div>
-          </div>
-          <div class="px-3 py-2 rounded-2xl bg-sky-50 border border-sky-200 min-w-[100px] text-center">
-            <div class="text-[11px] text-sky-700 font-semibold">Weight</div>
-            <div class="text-lg font-extrabold text-sky-800 mt-1">${currentPokemon.weight} hg</div>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-xs font-bold text-slate-800 mb-1">Abilities</h3>
-          <div class="flex gap-2 flex-wrap">
-            ${abilitiesHtml}
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-xs font-bold text-slate-800 mb-1">Base stats</h3>
-          <div class="space-y-2">
-            ${statsHtml}
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-xs font-bold text-slate-800 mb-1">Top moves</h3>
-          <div class="grid grid-cols-2 gap-2">
-            ${movesHtml}
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-2">
-            Evolution
-            <span class="text-[11px] text-slate-500">(click to jump)</span>
-          </h3>
-          <div class="flex flex-wrap gap-3">
-            ${evoHtml}
-          </div>
+      <div>
+        <h3 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-2">
+          Evolution
+          <span class="text-[11px] text-slate-500">(click to jump)</span>
+        </h3>
+        <div class="flex flex-wrap gap-3 justify-center">
+          ${evoHtml}
         </div>
       </div>
     </div>
@@ -377,19 +303,99 @@ function renderMainCard() {
   });
 }
 
-function renderGrid() {
-  if (!gridSection || !gridContainer || !loadMoreBtn) return;
+/**
+ * Right screen: abilities + stats + moves + region grid
+ */
+function renderRightPane() {
   renderStatus();
+  if (!pokemonDataPanel || !gridContainer || !loadMoreBtn) return;
 
-  // Right screen is always visible
-  gridSection.classList.remove("hidden");
+  // --- Pokémon data block ---
+  if (!currentPokemon) {
+    pokemonDataPanel.innerHTML = `
+      <div class="text-xs sm:text-sm text-slate-200 text-center">
+        Search for a Pokémon or press <span class="font-semibold text-amber-200">Random</span>
+        to view abilities, base stats, and top moves here.
+      </div>
+    `;
+  } else {
+    const abilitiesHtml = currentPokemon.abilities
+      .map(
+        (a) =>
+          `<span class="px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold capitalize bg-slate-900 border border-slate-600 text-slate-50">
+            ✨ ${a.name}${a.hidden ? " (hidden)" : ""}
+          </span>`
+      )
+      .join("");
 
+    const statsHtml = currentPokemon.stats
+      .map((s) => {
+        const label = STAT_LABELS[s.name] || capitalize(s.name);
+        return `
+        <div class="flex items-center gap-3">
+          <div class="w-28 text-xs sm:text-sm text-slate-200 font-semibold">${label}</div>
+          <div class="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div
+              class="h-2 rounded-full bg-emerald-400"
+              style="width:${Math.min(100, (s.value / 255) * 100)}%;"
+            ></div>
+          </div>
+          <div class="w-10 text-right font-mono text-xs text-slate-100">${s.value}</div>
+        </div>`;
+      })
+      .join("");
+
+    const movesHtml = currentPokemon.moves
+      .slice(0, 10)
+      .map(
+        (m) => `
+      <div class="px-2 py-1 rounded-xl border border-pink-200/60 text-[11px] sm:text-xs capitalize bg-gradient-to-br from-slate-900 to-slate-800 shadow-sm flex items-center gap-2 text-slate-50">
+        <span class="text-xs">⚡</span>
+        <span class="truncate">${m}</span>
+      </div>`
+      )
+      .join("");
+
+    pokemonDataPanel.innerHTML = `
+      <div class="flex flex-wrap gap-3 mb-2">
+        <div class="px-3 py-2 rounded-2xl bg-amber-50/10 border border-amber-300/60 min-w-[100px] text-center">
+          <div class="text-[11px] text-amber-200 font-semibold">Height</div>
+          <div class="text-lg font-extrabold text-amber-100 mt-1">${currentPokemon.height} dm</div>
+        </div>
+        <div class="px-3 py-2 rounded-2xl bg-sky-50/10 border border-sky-300/60 min-w-[100px] text-center">
+          <div class="text-[11px] text-sky-200 font-semibold">Weight</div>
+          <div class="text-lg font-extrabold text-sky-100 mt-1">${currentPokemon.weight} hg</div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <h3 class="text-xs font-bold text-slate-100 mb-1">Abilities</h3>
+        <div class="flex gap-2 flex-wrap">
+          ${abilitiesHtml}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <h3 class="text-xs font-bold text-slate-100 mb-1">Base stats</h3>
+        <div class="space-y-2">
+          ${statsHtml}
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-xs font-bold text-slate-100 mb-1">Top moves</h3>
+        <div class="grid grid-cols-2 gap-2">
+          ${movesHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Region grid block ---
   if (!showAll) {
-    // Idle message when not browsing region list
     gridContainer.innerHTML = `
-      <div class="col-span-full text-xs sm:text-sm text-slate-200 text-center px-2 py-4">
-        Press <span class="font-semibold text-amber-200">Show all</span> to browse cards from this region,
-        or search for a Pokémon to view detailed data in the main screen.
+      <div class="col-span-full text-[11px] sm:text-xs text-slate-300 text-center px-2 py-2">
+        Press <span class="font-semibold text-amber-200">Show all</span> to browse cards from this region.
       </div>
     `;
     loadMoreBtn.classList.add("hidden");
@@ -400,7 +406,7 @@ function renderGrid() {
     .map((p) => {
       return `
       <div
-        class="bg-slate-900/80 rounded-2xl shadow-md p-3 text-center border border-slate-700 hover:border-amber-300 hover:shadow-lg transition-colors cursor-pointer flex flex-col gap-2"
+        class="bg-slate-900 rounded-2xl shadow-md p-3 text-center border border-slate-700 hover:border-amber-300 hover:shadow-lg transition-colors cursor-pointer flex flex-col gap-2"
         data-pname="${p.name}"
       >
         <div class="w-full h-20 flex items-center justify-center bg-slate-800 rounded-xl">
@@ -426,30 +432,6 @@ function renderGrid() {
             )
             .join("")}
         </div>
-        ${
-          p.evolutions && p.evolutions.length
-            ? `<div class="mt-1 flex items-center justify-center gap-1">
-                ${p.evolutions
-                  .slice(0, 2)
-                  .map(
-                    (e) => `
-                  <button
-                    type="button"
-                    class="flex flex-col items-center text-[9px] px-1 py-1 rounded-xl bg-slate-800 border border-slate-600 hover:bg-amber-50 hover:text-slate-900"
-                    data-evo="${e.name}"
-                  >
-                    ${
-                      e.sprite
-                        ? `<img src="${e.sprite}" alt="${e.name}" class="w-6 h-6 object-contain mb-0.5" />`
-                        : `<div class="w-6 h-6 bg-slate-700 rounded mb-0.5"></div>`
-                    }
-                    <span class="capitalize max-w-[3rem] truncate">${e.name}</span>
-                  </button>`
-                  )
-                  .join("")}
-              </div>`
-            : `<div class="mt-1 text-[10px] text-slate-500">No evolution</div>`
-        }
         <div class="mt-2 flex items-center justify-center gap-2">
           <div class="text-[10px] text-slate-300">HP</div>
           <div class="w-16 bg-rose-900 rounded-full h-2 overflow-hidden">
@@ -467,18 +449,12 @@ function renderGrid() {
 
   if (regionDetails.length < regionList.length) {
     loadMoreBtn.classList.remove("hidden");
-    loadMoreBtn.textContent = isLoadingRegion ? "Loading more…" : "Load more";
+    loadMoreBtn.textContent = isLoadingRegion ? "Loading…" : "Load more";
   } else {
     loadMoreBtn.classList.add("hidden");
   }
 
   gridContainer.onclick = (e) => {
-    const evoBtn = e.target.closest("[data-evo]");
-    if (evoBtn) {
-      const name = evoBtn.getAttribute("data-evo");
-      if (name) fetchPokemon(name);
-      return;
-    }
     const tile = e.target.closest("[data-pname]");
     if (tile) {
       const name = tile.getAttribute("data-pname");
@@ -498,6 +474,7 @@ async function fetchPokemon(q) {
   renderError(null);
   currentPokemon = null;
   renderMainCard();
+  renderRightPane();
 
   try {
     const d = await getPokemonJson(trimmed);
@@ -548,7 +525,7 @@ async function fetchPokemon(q) {
     currentPokemon = normalized;
     showAll = false;
     renderMainCard();
-    renderGrid();
+    renderRightPane();
 
     try {
       const audio = new Audio(CRY_URL);
@@ -576,7 +553,7 @@ async function prepareRegionList(regionKey) {
 async function fetchRegionPage(page, pageSize = 30) {
   if (!regionList.length) return;
   isLoadingRegion = true;
-  renderGrid();
+  renderRightPane();
 
   const start = page * pageSize;
   const slice = regionList.slice(start, start + pageSize);
@@ -594,37 +571,8 @@ async function fetchRegionPage(page, pageSize = 30) {
               d.sprites.other["official-artwork"] &&
               d.sprites.other["official-artwork"].front_default) ||
             d.sprites.front_default,
-          hp: (d.stats.find((s) => s.stat.name === "hp") || {}).base_stat || 0,
-          evolutions: []
+          hp: (d.stats.find((s) => s.stat.name === "hp") || {}).base_stat || 0
         };
-
-        try {
-          const speciesUrl = d.species.url;
-          const evoData = await fetchEvolutionData(speciesUrl);
-          if (evoData && evoData.evolutions && evoData.evolutions.length) {
-            const evoSmall = await Promise.all(
-              evoData.evolutions.slice(0, 3).map(async (evo) => {
-                try {
-                  const pJson = await getPokemonJson(evo.name);
-                  return {
-                    name: evo.name,
-                    sprite:
-                      (pJson.sprites.other &&
-                        pJson.sprites.other["official-artwork"] &&
-                        pJson.sprites.other["official-artwork"].front_default) ||
-                      pJson.sprites.front_default
-                  };
-                } catch {
-                  return { name: evo.name, sprite: null };
-                }
-              })
-            );
-            base.evolutions = evoSmall;
-          }
-        } catch {
-          // ignore
-        }
-
         return base;
       })
     );
@@ -636,7 +584,7 @@ async function fetchRegionPage(page, pageSize = 30) {
     renderError("Failed to load region Pokémon");
   } finally {
     isLoadingRegion = false;
-    renderGrid();
+    renderRightPane();
   }
 }
 
@@ -645,7 +593,7 @@ async function onShowAll() {
   currentPokemon = null;
   regionDetails = [];
   renderMainCard();
-  renderGrid();
+  renderRightPane();
   if (!regionList.length) {
     await prepareRegionList(currentRegion);
   }
@@ -660,7 +608,7 @@ function clearAll() {
   showAll = false;
   renderError(null);
   renderMainCard();
-  renderGrid();
+  renderRightPane();
 }
 
 async function randomPokemon() {
@@ -767,9 +715,8 @@ document.addEventListener("DOMContentLoaded", () => {
   randomBtn = document.getElementById("randomBtn");
   clearBtn = document.getElementById("clearBtn");
   errorBox = document.getElementById("errorBox");
-  mainSection = document.getElementById("mainSection");
   mainCard = document.getElementById("mainCard");
-  gridSection = document.getElementById("gridSection");
+  pokemonDataPanel = document.getElementById("pokemonDataPanel");
   gridContainer = document.getElementById("gridContainer");
   loadMoreBtn = document.getElementById("loadMoreBtn");
   statusRegion = document.getElementById("statusRegion");
@@ -778,7 +725,7 @@ document.addEventListener("DOMContentLoaded", () => {
   suggestionsList = document.getElementById("suggestionsList");
 
   renderMainCard();
-  renderGrid();
+  renderRightPane();
   setupGlobalShortcuts();
   initAllNames();
 
@@ -842,7 +789,7 @@ document.addEventListener("DOMContentLoaded", () => {
       regionDetails = [];
       showAll = false;
       renderMainCard();
-      renderGrid();
+      renderRightPane();
     });
   }
 
