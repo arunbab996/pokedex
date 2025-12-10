@@ -21,7 +21,6 @@ const TYPE_META = {
   fairy: { label: "Fairy", emoji: "🧚", bg: "from-pink-100 to-pink-300 text-gray-900" }
 };
 
-// softer pastel frame around art card
 const TYPE_FRAME = {
   fire: "border-orange-200",
   water: "border-sky-200",
@@ -34,7 +33,6 @@ const TYPE_FRAME = {
   fairy: "border-pink-200"
 };
 
-// uniform stat labels
 const STAT_LABELS = {
   hp: "HP",
   attack: "Attack",
@@ -76,7 +74,7 @@ let isLoading = false;
 let isLoadingRegion = false;
 let suggestIndex = -1;
 
-// dom
+// DOM
 let searchForm,
   searchInput,
   searchBtn,
@@ -85,6 +83,9 @@ let searchForm,
   randomBtn,
   clearBtn,
   errorBox,
+  mainSection,
+  gridSection,
+  browseSection,
   mainCard,
   pokemonDataPanel,
   gridContainer,
@@ -205,13 +206,12 @@ function renderStatus() {
   if (statusEntries) statusEntries.textContent = entryCountLabel;
 }
 
-/**
- * Left screen: art + name + types + evolution strip
- */
+/* LEFT: Main art + name + types + evolution */
 function renderMainCard() {
   if (!mainCard) return;
 
-  if (!currentPokemon) {
+  if (!currentPokemon || showAll) {
+    // In browse mode or no Pokémon → simple placeholder
     mainCard.innerHTML = `
       <div>
         <p class="font-semibold mb-1 text-indigo-700">No Pokémon selected</p>
@@ -303,19 +303,32 @@ function renderMainCard() {
   });
 }
 
-/**
- * Right screen: abilities + stats + moves + region grid
- */
-function renderRightPane() {
+/* RIGHT: data screen + browse screen */
+function renderScreens() {
   renderStatus();
-  if (!pokemonDataPanel || !gridContainer || !loadMoreBtn) return;
 
-  // --- Pokémon data block ---
-  if (!currentPokemon) {
+  // Toggle which screens are visible
+  if (showAll) {
+    mainSection && mainSection.classList.add("hidden");
+    gridSection && gridSection.classList.add("hidden");
+    browseSection && browseSection.classList.remove("hidden");
+  } else {
+    mainSection && mainSection.classList.remove("hidden");
+    gridSection && gridSection.classList.remove("hidden");
+    browseSection && browseSection.classList.add("hidden");
+  }
+
+  // Data screen content (abilities / stats / moves)
+  if (!pokemonDataPanel) return;
+
+  if (!currentPokemon || showAll) {
     pokemonDataPanel.innerHTML = `
       <div class="text-xs sm:text-sm text-slate-200 text-center">
-        Search for a Pokémon or press <span class="font-semibold text-amber-200">Random</span>
-        to view abilities, base stats, and top moves here.
+        ${
+          showAll
+            ? "Browsing region entries. Tap a card to jump back into detailed entry mode."
+            : 'Search for a Pokémon or press <span class="font-semibold text-amber-200">Random</span> to view abilities, base stats, and top moves here.'
+        }
       </div>
     `;
   } else {
@@ -346,7 +359,7 @@ function renderRightPane() {
       .join("");
 
     const movesHtml = currentPokemon.moves
-      .slice(0, 10)
+      .slice(0, 8)
       .map(
         (m) => `
       <div class="px-2 py-1 rounded-xl border border-pink-200/60 text-[11px] sm:text-xs capitalize bg-gradient-to-br from-slate-900 to-slate-800 shadow-sm flex items-center gap-2 text-slate-50">
@@ -391,13 +404,11 @@ function renderRightPane() {
     `;
   }
 
-  // --- Region grid block ---
+  // Browse grid (big iPad view)
+  if (!gridContainer || !loadMoreBtn) return;
+
   if (!showAll) {
-    gridContainer.innerHTML = `
-      <div class="col-span-full text-[11px] sm:text-xs text-slate-300 text-center px-2 py-2">
-        Press <span class="font-semibold text-amber-200">Show all</span> to browse cards from this region.
-      </div>
-    `;
+    gridContainer.innerHTML = "";
     loadMoreBtn.classList.add("hidden");
     return;
   }
@@ -473,8 +484,10 @@ async function fetchPokemon(q) {
   setLoading(true);
   renderError(null);
   currentPokemon = null;
+  showAll = false;
+  regionDetails = [];
   renderMainCard();
-  renderRightPane();
+  renderScreens();
 
   try {
     const d = await getPokemonJson(trimmed);
@@ -519,13 +532,12 @@ async function fetchPokemon(q) {
         normalized.evolutions = evoFull;
       }
     } catch {
-      // ignore evo error
+      // ignore evo errors
     }
 
     currentPokemon = normalized;
-    showAll = false;
     renderMainCard();
-    renderRightPane();
+    renderScreens();
 
     try {
       const audio = new Audio(CRY_URL);
@@ -550,10 +562,10 @@ async function prepareRegionList(regionKey) {
   regionList = arr;
 }
 
-async function fetchRegionPage(page, pageSize = 30) {
+async function fetchRegionPage(page, pageSize = 40) {
   if (!regionList.length) return;
   isLoadingRegion = true;
-  renderRightPane();
+  renderScreens();
 
   const start = page * pageSize;
   const slice = regionList.slice(start, start + pageSize);
@@ -562,7 +574,7 @@ async function fetchRegionPage(page, pageSize = 30) {
     const details = await Promise.all(
       slice.map(async (idOrName) => {
         const d = await getPokemonJson(idOrName);
-        const base = {
+        return {
           id: d.id,
           name: d.name,
           types: d.types.map((t) => t.type.name),
@@ -573,7 +585,6 @@ async function fetchRegionPage(page, pageSize = 30) {
             d.sprites.front_default,
           hp: (d.stats.find((s) => s.stat.name === "hp") || {}).base_stat || 0
         };
-        return base;
       })
     );
 
@@ -584,7 +595,7 @@ async function fetchRegionPage(page, pageSize = 30) {
     renderError("Failed to load region Pokémon");
   } finally {
     isLoadingRegion = false;
-    renderRightPane();
+    renderScreens();
   }
 }
 
@@ -593,7 +604,7 @@ async function onShowAll() {
   currentPokemon = null;
   regionDetails = [];
   renderMainCard();
-  renderRightPane();
+  renderScreens();
   if (!regionList.length) {
     await prepareRegionList(currentRegion);
   }
@@ -608,7 +619,7 @@ function clearAll() {
   showAll = false;
   renderError(null);
   renderMainCard();
-  renderRightPane();
+  renderScreens();
 }
 
 async function randomPokemon() {
@@ -715,6 +726,9 @@ document.addEventListener("DOMContentLoaded", () => {
   randomBtn = document.getElementById("randomBtn");
   clearBtn = document.getElementById("clearBtn");
   errorBox = document.getElementById("errorBox");
+  mainSection = document.getElementById("mainSection");
+  gridSection = document.getElementById("gridSection");
+  browseSection = document.getElementById("browseSection");
   mainCard = document.getElementById("mainCard");
   pokemonDataPanel = document.getElementById("pokemonDataPanel");
   gridContainer = document.getElementById("gridContainer");
@@ -725,7 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
   suggestionsList = document.getElementById("suggestionsList");
 
   renderMainCard();
-  renderRightPane();
+  renderScreens();
   setupGlobalShortcuts();
   initAllNames();
 
@@ -789,7 +803,7 @@ document.addEventListener("DOMContentLoaded", () => {
       regionDetails = [];
       showAll = false;
       renderMainCard();
-      renderRightPane();
+      renderScreens();
     });
   }
 
