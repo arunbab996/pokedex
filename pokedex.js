@@ -1,4 +1,4 @@
-// Simple Pokédex logic in plain JS (no React)
+// Simple Pokédex logic for static web page (no React)
 
 const TYPE_META = {
   normal: { label: "Normal", emoji: "⚪", bg: "from-gray-100 to-gray-200 text-gray-800" },
@@ -65,7 +65,7 @@ let isLoading = false;
 let isLoadingRegion = false;
 let suggestIndex = -1;
 
-// elements
+// dom elements
 let searchForm,
   searchInput,
   searchBtn,
@@ -74,22 +74,14 @@ let searchForm,
   randomBtn,
   clearBtn,
   errorBox,
-  scanOverlay,
-  portraitScreen,
-  entryStatus,
-  dataScreen,
+  mainCard,
+  gridSection,
+  gridContainer,
+  loadMoreBtn,
   statusRegion,
   statusMode,
   statusEntries,
-  suggestionsList,
-  dpadUp,
-  dpadDown,
-  dpadLeft,
-  dpadRight,
-  dpadCenter,
-  btnA,
-  btnB,
-  bigRandom;
+  suggestionsList;
 
 function capitalize(s) {
   if (!s) return "";
@@ -147,20 +139,15 @@ async function fetchEvolutionData(speciesUrl) {
   }
 }
 
-// helpers to show/hide loading
 function setLoading(flag) {
   isLoading = flag;
-  if (scanOverlay) {
-    scanOverlay.classList.toggle("hidden", !flag);
-  }
   if (searchBtn) {
     searchBtn.textContent = flag ? "Searching…" : "Search";
     searchBtn.disabled = flag;
   }
 }
 
-// render functions
-
+// helpers to render pieces
 function createTypeBadges(types) {
   return types
     .map((t) => {
@@ -182,64 +169,18 @@ function createTypeBadges(types) {
     .join("");
 }
 
-function renderPortrait() {
-  if (!portraitScreen) return;
-
-  if (!currentPokemon) {
-    portraitScreen.innerHTML = `
-      <div class="text-center">
-        <div class="text-lg font-bold mb-1">No Pokémon selected</div>
-        <p class="text-xs sm:text-sm text-indigo-700/90 max-w-xs mx-auto">
-          Search by name or ID, press <span class="font-bold">Random</span>, or use the d-pad / keyboard arrows to explore entries.
-        </p>
-      </div>
-    `;
-    if (entryStatus) entryStatus.textContent = "Ready to scan";
-    return;
-  }
-
-  const primaryType = currentPokemon.types[0];
-  const frameClass = TYPE_FRAME[primaryType] || "border-yellow-200/80 shadow-xl";
-
-  portraitScreen.innerHTML = `
-    <div
-      class="relative mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border-[6px] ${frameClass} card-flip"
-    >
-      <div class="flex flex-col">
-        <div class="p-4 bg-gradient-to-b from-white to-red-50 flex flex-col items-center justify-center">
-          <div class="w-full p-3 rounded-2xl bg-white/80 backdrop-blur-sm border-4 border-pink-100 shadow-inner">
-            <div class="w-full h-44 flex items-center justify-center">
-              ${
-                currentPokemon.sprite
-                  ? `<img src="${currentPokemon.sprite}" alt="${currentPokemon.name}" class="w-full h-full object-contain drop-shadow-2xl" />`
-                  : `<div class="w-full h-full rounded bg-gray-100 flex items-center justify-center">No image</div>`
-              }
-            </div>
-            <div class="mt-3 text-center">
-              <div class="text-xs text-indigo-500 font-semibold">
-                #${String(currentPokemon.id).padStart(3, "0")}
-              </div>
-              <h2 class="text-2xl font-extrabold capitalize mt-1 text-blue-900 drop-shadow-sm">
-                ${capitalize(currentPokemon.name)}
-              </h2>
-              <div class="mt-2 flex gap-2 justify-center flex-wrap">
-                ${createTypeBadges(currentPokemon.types)}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  if (entryStatus) {
-    entryStatus.textContent = `Entry #${currentPokemon.id}`;
+function renderError(msg) {
+  if (!errorBox) return;
+  if (!msg) {
+    errorBox.classList.add("hidden");
+    errorBox.textContent = "";
+  } else {
+    errorBox.textContent = msg;
+    errorBox.classList.remove("hidden");
   }
 }
 
-function renderDataScreen() {
-  if (!dataScreen) return;
-
+function renderStatus() {
   const regionConf = REGIONS[currentRegion] || REGIONS.all;
   const totalEntries = regionConf.range[1] - regionConf.range[0] + 1;
   const modeLabel = showAll ? "BROWSE" : currentPokemon ? "ENTRY" : "IDLE";
@@ -252,150 +193,81 @@ function renderDataScreen() {
   if (statusRegion) statusRegion.textContent = regionConf.label;
   if (statusMode) statusMode.textContent = modeLabel;
   if (statusEntries) statusEntries.textContent = entryCountLabel;
+}
 
-  if (showAll) {
-    // grid mode
-    dataScreen.innerHTML = `
-      <div class="mt-1 max-h-[260px] overflow-auto pr-1">
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="gridContainer">
-          ${regionDetails
-            .map((p) => {
-              return `
-                <div
-                  class="bg-slate-900/80 rounded-2xl shadow-md p-2 text-center border border-slate-600 hover:border-yellow-300 hover:shadow-lg transition-colors cursor-pointer flex flex-col gap-1"
-                  data-pname="${p.name}"
-                >
-                  <div class="w-full h-16 flex items-center justify-center bg-slate-800 rounded-xl">
-                    ${
-                      p.sprite
-                        ? `<img src="${p.sprite}" alt="${p.name}" class="w-12 h-12 object-contain" />`
-                        : `<div class="w-12 h-12 bg-slate-700 rounded"></div>`
-                    }
-                  </div>
-                  <div>
-                    <div class="text-[9px] text-sky-300 font-semibold">
-                      #${String(p.id).padStart(3, "0")}
-                    </div>
-                    <div class="text-[10px] sm:text-xs font-extrabold capitalize text-slate-50">
-                      ${p.name}
-                    </div>
-                  </div>
-                  <div class="mt-1 flex items-center justify-center gap-1 flex-wrap">
-                    ${p.types
-                      .map(
-                        (t) =>
-                          `<span class="px-1.5 py-0.5 rounded-full bg-slate-800 text-[9px] capitalize border border-slate-600">${t}</span>`
-                      )
-                      .join("")}
-                  </div>
-                  ${
-                    p.evolutions && p.evolutions.length
-                      ? `<div class="mt-1 flex items-center justify-center gap-1">
-                          ${p.evolutions
-                            .slice(0, 2)
-                            .map(
-                              (e) => `
-                            <button
-                              type="button"
-                              class="flex flex-col items-center text-[8px] px-1 py-0.5 rounded bg-slate-800/90 border border-slate-600 hover:bg-yellow-500/20"
-                              data-evo="${e.name}"
-                            >
-                              ${
-                                e.sprite
-                                  ? `<img src="${e.sprite}" alt="${e.name}" class="w-5 h-5 object-contain mb-0.5" />`
-                                  : `<div class="w-5 h-5 bg-slate-700 rounded mb-0.5"></div>`
-                              }
-                              <span class="capitalize max-w-[2.5rem] truncate">${e.name}</span>
-                            </button>`
-                            )
-                            .join("")}
-                        </div>`
-                      : `<div class="mt-1 text-[8px] text-slate-400">No evolution</div>`
-                  }
-                  <div class="mt-1 flex items-center justify-center gap-1">
-                    <div class="text-[8px] text-slate-300">HP</div>
-                    <div class="w-12 bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                      <div
-                        class="h-1.5 rounded-full bg-red-400"
-                        style="width: ${Math.min(100, (p.hp / 255) * 100)}%;"
-                      ></div>
-                    </div>
-                    <div class="text-[8px] font-mono text-slate-200">${p.hp}</div>
-                  </div>
-                </div>
-              `;
-            })
-            .join("")}
-        </div>
-        ${
-          regionDetails.length < regionList.length
-            ? `<div class="mt-3 text-center">
-                <button
-                  id="loadMoreBtn"
-                  type="button"
-                  class="px-3 py-1.5 rounded-full bg-sky-500 text-white shadow text-[11px] font-semibold"
-                >
-                  ${isLoadingRegion ? "Loading more…" : "Load more cards"}
-                </button>
-              </div>`
-            : ""
-        }
+function renderMainCard() {
+  if (!mainCard) return;
+  renderStatus();
+
+  if (!currentPokemon) {
+    mainCard.innerHTML = `
+      <div>
+        <p class="font-semibold mb-1">Welcome to your Pokédex.</p>
+        <p class="text-xs sm:text-sm max-w-sm mx-auto text-slate-600">
+          Start typing a Pokémon name or ID above, or press <span class="font-semibold">Random</span>.
+          You can also choose a region and hit <span class="font-semibold">Show all</span> to browse cards.
+        </p>
       </div>
     `;
-  } else if (currentPokemon) {
-    // detailed entry mode
-    const abilitiesHtml = currentPokemon.abilities
-      .map(
-        (a) =>
-          `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize bg-slate-800 border border-slate-600">
-            ✨ ${a.name}${a.hidden ? " (hidden)" : ""}
-          </span>`
-      )
-      .join("");
+    return;
+  }
 
-    const statsHtml = currentPokemon.stats
-      .map(
-        (s) => `
-        <div class="flex items-center gap-2">
-          <div class="w-20 text-[9px] capitalize text-slate-200 font-semibold">${s.name}</div>
-          <div class="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden">
-            <div
-              class="h-2 rounded-full"
-              style="width:${Math.min(100, (s.value / 255) * 100)}%; background:linear-gradient(90deg,#34d399,#10b981);"
-            ></div>
-          </div>
-          <div class="w-8 text-right font-mono text-[9px] text-slate-100">${s.value}</div>
-        </div>`
-      )
-      .join("");
+  const primaryType = currentPokemon.types[0];
+  const frameClass = TYPE_FRAME[primaryType] || "border-amber-200 shadow-xl";
 
-    const movesHtml = currentPokemon.moves
-      .slice(0, 10)
-      .map(
-        (m) => `
-        <div class="px-2 py-0.5 rounded-lg border border-slate-600 text-[9px] capitalize bg-slate-800 flex items-center gap-1">
-          <span class="text-xs">⚡</span>
-          <span class="truncate">${m}</span>
-        </div>`
-      )
-      .join("");
+  const abilitiesHtml = currentPokemon.abilities
+    .map(
+      (a) =>
+        `<span class="px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold capitalize bg-slate-50 border border-slate-200">
+          ✨ ${a.name}${a.hidden ? " (hidden)" : ""}
+        </span>`
+    )
+    .join("");
 
-    const evoHtml = currentPokemon.evolutions && currentPokemon.evolutions.length
+  const statsHtml = currentPokemon.stats
+    .map(
+      (s) => `
+      <div class="flex items-center gap-3">
+        <div class="w-24 text-xs sm:text-sm capitalize text-slate-700 font-semibold">${s.name}</div>
+        <div class="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+          <div
+            class="h-2 rounded-full"
+            style="width:${Math.min(100, (s.value / 255) * 100)}%; background:linear-gradient(90deg,#34d399,#10b981);"
+          ></div>
+        </div>
+        <div class="w-10 text-right font-mono text-xs text-slate-800">${s.value}</div>
+      </div>`
+    )
+    .join("");
+
+  const movesHtml = currentPokemon.moves
+    .slice(0, 10)
+    .map(
+      (m) => `
+      <div class="px-2 py-1 rounded-xl border border-pink-100 text-[11px] sm:text-xs capitalize bg-gradient-to-br from-white to-pink-50 shadow-sm flex items-center gap-2">
+        <span class="text-xs">⚡</span>
+        <span class="truncate">${m}</span>
+      </div>`
+    )
+    .join("");
+
+  const evoHtml =
+    currentPokemon.evolutions && currentPokemon.evolutions.length
       ? currentPokemon.evolutions
           .map(
             (e, idx) => `
         <div class="flex items-center gap-2">
           <button
             type="button"
-            class="flex flex-col items-center w-20 p-1.5 bg-slate-900 rounded-2xl shadow-md border border-slate-600 hover:border-yellow-300 hover:shadow-lg transition-colors cursor-pointer"
+            class="flex flex-col items-center w-20 p-2 bg-white rounded-2xl shadow border border-slate-200 hover:border-amber-400 hover:shadow-md transition-colors"
             data-evo="${e.name}"
           >
             ${
               e.sprite
-                ? `<img src="${e.sprite}" alt="${e.name}" class="w-10 h-10 object-contain mb-0.5" />`
-                : `<div class="w-10 h-10 bg-slate-700 rounded mb-0.5"></div>`
+                ? `<img src="${e.sprite}" alt="${e.name}" class="w-10 h-10 object-contain mb-1" />`
+                : `<div class="w-10 h-10 bg-slate-100 rounded mb-1"></div>`
             }
-            <div class="text-[9px] mt-0.5 capitalize font-semibold">${e.name}</div>
+            <div class="text-[11px] capitalize font-semibold text-slate-700">${e.name}</div>
           </button>
           ${
             idx < currentPokemon.evolutions.length - 1
@@ -405,101 +277,86 @@ function renderDataScreen() {
         </div>`
           )
           .join("")
-      : `<div class="text-[9px] text-slate-400">No evolution data</div>`;
+      : `<div class="text-xs text-slate-400">No evolution data</div>`;
 
-    dataScreen.innerHTML = `
-      <div class="mt-1 max-h-[260px] overflow-auto pr-1 text-[11px] sm:text-xs leading-relaxed">
-        <div class="flex items-start justify-between gap-2 flex-wrap mb-3">
-          <div class="flex gap-2 flex-wrap">
-            <div class="px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-400/60 min-w-[72px] text-center">
-              <div class="text-[9px] text-amber-200 font-semibold">Height</div>
-              <div class="text-sm font-extrabold text-amber-100 mt-0.5">${currentPokemon.height} dm</div>
+  mainCard.innerHTML = `
+    <div class="grid md:grid-cols-2 gap-5">
+      <!-- left: image + basic -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="w-full max-w-xs mx-auto bg-white rounded-3xl shadow-2xl border-[5px] ${frameClass} card-flip">
+          <div class="p-4 bg-gradient-to-b from-white to-slate-50 flex flex-col items-center">
+            <div class="w-full h-48 flex items-center justify-center">
+              ${
+                currentPokemon.sprite
+                  ? `<img src="${currentPokemon.sprite}" alt="${currentPokemon.name}" class="w-full h-full object-contain drop-shadow-xl" />`
+                  : `<div class="w-full h-full rounded-xl bg-slate-100 flex items-center justify-center">No image</div>`
+              }
             </div>
-            <div class="px-2 py-1 rounded-lg bg-sky-500/20 border border-sky-400/60 min-w-[72px] text-center">
-              <div class="text-[9px] text-sky-200 font-semibold">Weight</div>
-              <div class="text-sm font-extrabold text-sky-100 mt-0.5">${currentPokemon.weight} hg</div>
+            <div class="mt-3 text-center">
+              <div class="text-xs text-slate-500 font-semibold">
+                #${String(currentPokemon.id).padStart(3, "0")}
+              </div>
+              <h2 class="text-2xl font-extrabold capitalize mt-1 text-rose-700">
+                ${capitalize(currentPokemon.name)}
+              </h2>
+              <div class="mt-2 flex gap-2 justify-center flex-wrap">
+                ${createTypeBadges(currentPokemon.types)}
+              </div>
             </div>
           </div>
-          <div class="text-[9px] text-slate-300 text-right">
-            <div>Data from</div>
-            <a href="https://pokeapi.co" target="_blank" rel="noreferrer" class="font-semibold text-red-300 underline">
-              PokeAPI
-            </a>
+        </div>
+      </div>
+
+      <!-- right: details -->
+      <div class="flex flex-col gap-4 text-xs sm:text-sm text-slate-700">
+        <div class="flex flex-wrap gap-3">
+          <div class="px-3 py-2 rounded-2xl bg-amber-50 border border-amber-200 min-w-[100px] text-center">
+            <div class="text-[11px] text-amber-700 font-semibold">Height</div>
+            <div class="text-lg font-extrabold text-amber-800 mt-1">${currentPokemon.height} dm</div>
+          </div>
+          <div class="px-3 py-2 rounded-2xl bg-sky-50 border border-sky-200 min-w-[100px] text-center">
+            <div class="text-[11px] text-sky-700 font-semibold">Weight</div>
+            <div class="text-lg font-extrabold text-sky-800 mt-1">${currentPokemon.weight} hg</div>
           </div>
         </div>
 
-        <div class="mb-3">
-          <div class="text-[10px] font-bold text-sky-200 mb-1">Abilities</div>
-          <div class="flex gap-1.5 flex-wrap">
+        <div>
+          <h3 class="text-xs font-bold text-slate-800 mb-1">Abilities</h3>
+          <div class="flex gap-2 flex-wrap">
             ${abilitiesHtml}
           </div>
         </div>
 
-        <div class="mb-3">
-          <div class="text-[10px] font-bold text-sky-200 mb-1">Base stats</div>
-          <div class="space-y-1.5">
+        <div>
+          <h3 class="text-xs font-bold text-slate-800 mb-1">Base stats</h3>
+          <div class="space-y-2">
             ${statsHtml}
           </div>
         </div>
 
-        <div class="mb-3">
-          <div class="text-[10px] font-bold text-sky-200 mb-1">Top moves</div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+        <div>
+          <h3 class="text-xs font-bold text-slate-800 mb-1">Top moves</h3>
+          <div class="grid grid-cols-2 gap-2">
             ${movesHtml}
           </div>
         </div>
 
-        <div class="mb-1">
-          <div class="text-[10px] font-bold text-sky-200 mb-1 flex items-center gap-2">
+        <div>
+          <h3 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-2">
             Evolution
-            <span class="text-[9px] text-slate-300">(tap to jump)</span>
-          </div>
-          <div class="flex items-center gap-2 overflow-x-auto py-1">
+            <span class="text-[11px] text-slate-500">(click to jump)</span>
+          </h3>
+          <div class="flex flex-wrap gap-3">
             ${evoHtml}
           </div>
         </div>
-
-        <div class="mt-1 text-[9px] text-slate-300">
-          Tip: tap evolutions, region tiles, or press R / arrows to hop quickly between entries.
-        </div>
       </div>
-    `;
-  } else {
-    dataScreen.innerHTML = `
-      <div class="mt-4 text-[11px] text-slate-200 text-center">
-        Press <span class="font-bold">Show all</span> to browse cards from this region, or search for a Pokémon to view detailed data here.
-      </div>
-    `;
-  }
+    </div>
+  `;
 
-  // grid / evo click delegation
-  const gridContainer = document.getElementById("gridContainer");
-  if (gridContainer) {
-    gridContainer.onclick = (e) => {
-      const evoBtn = e.target.closest("[data-evo]");
-      if (evoBtn) {
-        const name = evoBtn.getAttribute("data-evo");
-        if (name) fetchPokemon(name);
-        return;
-      }
-      const tile = e.target.closest("[data-pname]");
-      if (tile) {
-        const name = tile.getAttribute("data-pname");
-        if (name) fetchPokemon(name);
-      }
-    };
-  }
-
-  const loadMoreBtn = document.getElementById("loadMoreBtn");
-  if (loadMoreBtn) {
-    loadMoreBtn.onclick = () => {
-      if (!isLoadingRegion) fetchRegionPage(regionPage + 1);
-    };
-  }
-
-  // evo strip clicks in detail mode
-  const evoButtons = dataScreen.querySelectorAll("[data-evo]");
-  evoButtons.forEach((btn) => {
+  // attach evo click handlers
+  const evoBtns = mainCard.querySelectorAll("[data-evo]");
+  evoBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
       const name = btn.getAttribute("data-evo");
       if (name) fetchPokemon(name);
@@ -507,15 +364,110 @@ function renderDataScreen() {
   });
 }
 
-function renderError(message) {
-  if (!errorBox) return;
-  if (!message) {
-    errorBox.classList.add("hidden");
-    errorBox.textContent = "";
+function renderGrid() {
+  if (!gridSection || !gridContainer || !loadMoreBtn) return;
+  renderStatus();
+
+  if (!showAll) {
+    gridSection.classList.add("hidden");
     return;
   }
-  errorBox.textContent = message;
-  errorBox.classList.remove("hidden");
+
+  gridSection.classList.remove("hidden");
+
+  gridContainer.innerHTML = regionDetails
+    .map((p) => {
+      return `
+      <div
+        class="bg-white rounded-2xl shadow-md p-3 text-center border border-slate-100 hover:border-amber-300 hover:shadow-lg transition-colors cursor-pointer flex flex-col gap-2"
+        data-pname="${p.name}"
+      >
+        <div class="w-full h-20 flex items-center justify-center bg-slate-50 rounded-xl">
+          ${
+            p.sprite
+              ? `<img src="${p.sprite}" alt="${p.name}" class="w-16 h-16 object-contain" />`
+              : `<div class="w-16 h-16 bg-slate-100 rounded-xl"></div>`
+          }
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-500 font-semibold">
+            #${String(p.id).padStart(3, "0")}
+          </div>
+          <div class="text-xs sm:text-sm font-extrabold capitalize text-slate-800">
+            ${p.name}
+          </div>
+        </div>
+        <div class="mt-1 flex items-center justify-center gap-1 flex-wrap">
+          ${p.types
+            .map(
+              (t) =>
+                `<span class="px-1.5 py-0.5 rounded-full bg-slate-50 text-[10px] capitalize border border-slate-200">${t}</span>`
+            )
+            .join("")}
+        </div>
+        ${
+          p.evolutions && p.evolutions.length
+            ? `<div class="mt-1 flex items-center justify-center gap-1">
+                ${p.evolutions
+                  .slice(0, 2)
+                  .map(
+                    (e) => `
+                  <button
+                    type="button"
+                    class="flex flex-col items-center text-[9px] px-1 py-1 rounded-xl bg-slate-50 border border-slate-200 hover:bg-amber-50"
+                    data-evo="${e.name}"
+                  >
+                    ${
+                      e.sprite
+                        ? `<img src="${e.sprite}" alt="${e.name}" class="w-6 h-6 object-contain mb-0.5" />`
+                        : `<div class="w-6 h-6 bg-slate-100 rounded mb-0.5"></div>`
+                    }
+                    <span class="capitalize max-w-[3rem] truncate">${e.name}</span>
+                  </button>`
+                  )
+                  .join("")}
+              </div>`
+            : `<div class="mt-1 text-[10px] text-slate-400">No evolution</div>`
+        }
+        <div class="mt-2 flex items-center justify-center gap-2">
+          <div class="text-[10px] text-slate-500">HP</div>
+          <div class="w-16 bg-rose-100 rounded-full h-2 overflow-hidden">
+            <div
+              class="h-2 rounded-full bg-rose-400"
+              style="width:${Math.min(100, (p.hp / 255) * 100)}%;"
+            ></div>
+          </div>
+          <div class="text-[10px] font-mono text-slate-700">${p.hp}</div>
+        </div>
+      </div>
+    `;
+    })
+    .join("");
+
+  if (regionDetails.length < regionList.length) {
+    loadMoreBtn.classList.remove("hidden");
+    loadMoreBtn.textContent = isLoadingRegion ? "Loading more…" : "Load more";
+  } else {
+    loadMoreBtn.classList.add("hidden");
+  }
+
+  gridContainer.onclick = (e) => {
+    const evoBtn = e.target.closest("[data-evo]");
+    if (evoBtn) {
+      const name = evoBtn.getAttribute("data-evo");
+      if (name) fetchPokemon(name);
+      return;
+    }
+    const tile = e.target.closest("[data-pname]");
+    if (tile) {
+      const name = tile.getAttribute("data-pname");
+      if (name) fetchPokemon(name);
+    }
+  };
+
+  loadMoreBtn.onclick = () => {
+    if (!isLoadingRegion) fetchRegionPage(regionPage + 1);
+  };
 }
 
 async function fetchPokemon(q) {
@@ -524,8 +476,7 @@ async function fetchPokemon(q) {
   setLoading(true);
   renderError(null);
   currentPokemon = null;
-  renderPortrait();
-  renderDataScreen();
+  renderMainCard();
 
   try {
     const d = await getPokemonJson(trimmed);
@@ -570,23 +521,21 @@ async function fetchPokemon(q) {
         normalized.evolutions = evoFull;
       }
     } catch {
-      // ignore
+      // ignore evo error
     }
 
     currentPokemon = normalized;
     showAll = false;
+    renderMainCard();
+    renderGrid();
 
-    // tiny sound
+    // sound
     try {
       const audio = new Audio(CRY_URL);
       audio.volume = 0.3;
       audio.play().catch(() => {});
     } catch {}
 
-    renderPortrait();
-    renderDataScreen();
-
-    // update search input with proper name
     if (searchInput) searchInput.value = currentPokemon.name;
   } catch (err) {
     console.error(err);
@@ -607,7 +556,7 @@ async function prepareRegionList(regionKey) {
 async function fetchRegionPage(page, pageSize = 30) {
   if (!regionList.length) return;
   isLoadingRegion = true;
-  renderDataScreen();
+  renderGrid();
 
   const start = page * pageSize;
   const slice = regionList.slice(start, start + pageSize);
@@ -667,7 +616,7 @@ async function fetchRegionPage(page, pageSize = 30) {
     renderError("Failed to load region Pokémon");
   } finally {
     isLoadingRegion = false;
-    renderDataScreen();
+    renderGrid();
   }
 }
 
@@ -675,8 +624,8 @@ async function onShowAll() {
   showAll = true;
   currentPokemon = null;
   regionDetails = [];
-  renderPortrait();
-  renderDataScreen();
+  renderMainCard();
+  renderGrid();
   if (!regionList.length) {
     await prepareRegionList(currentRegion);
   }
@@ -690,8 +639,8 @@ function clearAll() {
   regionList = [];
   showAll = false;
   renderError(null);
-  renderPortrait();
-  renderDataScreen();
+  renderMainCard();
+  renderGrid();
 }
 
 async function randomPokemon() {
@@ -721,44 +670,6 @@ function browseById(delta) {
   let nextId = currentPokemon.id + delta;
   if (nextId < 1) nextId = 1;
   fetchPokemon(nextId);
-}
-
-function updateQuickRegionButtons() {
-  const buttons = document.querySelectorAll(".quickRegion");
-  buttons.forEach((btn) => {
-    const key = btn.getAttribute("data-region-short");
-    if (key === currentRegion) {
-      btn.classList.remove("bg-sky-500", "border-sky-300", "text-white");
-      btn.classList.add("bg-sky-400", "border-sky-200", "text-slate-900");
-    } else {
-      btn.classList.add("bg-sky-500", "border-sky-300", "text-white");
-      btn.classList.remove("bg-sky-400", "border-sky-200", "text-slate-900");
-    }
-  });
-}
-
-function setupGlobalShortcuts() {
-  window.addEventListener("keydown", (e) => {
-    const target = e.target;
-    const tag = (target && target.tagName && target.tagName.toLowerCase()) || "";
-    const isTyping =
-      tag === "input" || tag === "textarea" || (target && target.isContentEditable);
-    if (isTyping) return;
-
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      browseById(-1);
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      browseById(1);
-    } else if ((e.key === "r" || e.key === "R") && !e.metaKey && !e.ctrlKey && !e.altKey) {
-      e.preventDefault();
-      randomPokemon();
-    } else if (e.key === "s" || e.key === "/") {
-      e.preventDefault();
-      if (searchInput) searchInput.focus();
-    }
-  });
 }
 
 function renderSuggestions() {
@@ -803,8 +714,32 @@ async function initAllNames() {
   }
 }
 
+function setupGlobalShortcuts() {
+  window.addEventListener("keydown", (e) => {
+    const target = e.target;
+    const tag = (target && target.tagName && target.tagName.toLowerCase()) || "";
+    const isTyping =
+      tag === "input" || tag === "textarea" || (target && target.isContentEditable);
+    if (isTyping) return;
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      browseById(-1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      browseById(1);
+    } else if ((e.key === "r" || e.key === "R") && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      e.preventDefault();
+      randomPokemon();
+    } else if (e.key === "s" || e.key === "/") {
+      e.preventDefault();
+      if (searchInput) searchInput.focus();
+    }
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  // grab elements
+  // get elements
   searchForm = document.getElementById("searchForm");
   searchInput = document.getElementById("searchInput");
   searchBtn = document.getElementById("searchBtn");
@@ -813,32 +748,20 @@ document.addEventListener("DOMContentLoaded", () => {
   randomBtn = document.getElementById("randomBtn");
   clearBtn = document.getElementById("clearBtn");
   errorBox = document.getElementById("errorBox");
-  scanOverlay = document.getElementById("scanOverlay");
-  portraitScreen = document.getElementById("portraitScreen");
-  entryStatus = document.getElementById("entryStatus");
-  dataScreen = document.getElementById("dataScreen");
+  mainCard = document.getElementById("mainCard");
+  gridSection = document.getElementById("gridSection");
+  gridContainer = document.getElementById("gridContainer");
+  loadMoreBtn = document.getElementById("loadMoreBtn");
   statusRegion = document.getElementById("statusRegion");
   statusMode = document.getElementById("statusMode");
   statusEntries = document.getElementById("statusEntries");
   suggestionsList = document.getElementById("suggestionsList");
 
-  dpadUp = document.getElementById("dpadUp");
-  dpadDown = document.getElementById("dpadDown");
-  dpadLeft = document.getElementById("dpadLeft");
-  dpadRight = document.getElementById("dpadRight");
-  dpadCenter = document.getElementById("dpadCenter");
-  btnA = document.getElementById("btnA");
-  btnB = document.getElementById("btnB");
-  bigRandom = document.getElementById("bigRandom");
-
-  // initial render
-  renderPortrait();
-  renderDataScreen();
-  updateQuickRegionButtons();
+  renderMainCard();
+  renderGrid();
   setupGlobalShortcuts();
   initAllNames();
 
-  // events
   if (searchForm) {
     searchForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -893,57 +816,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (regionSelect) {
-    regionSelect.addEventListener("change", async () => {
+    regionSelect.addEventListener("change", () => {
       currentRegion = regionSelect.value;
-      updateQuickRegionButtons();
       regionList = [];
       regionDetails = [];
       showAll = false;
-      renderDataScreen();
+      renderMainCard();
+      renderGrid();
     });
   }
 
   if (showAllBtn) showAllBtn.addEventListener("click", onShowAll);
   if (randomBtn) randomBtn.addEventListener("click", randomPokemon);
-  if (bigRandom) bigRandom.addEventListener("click", randomPokemon);
   if (clearBtn) clearBtn.addEventListener("click", clearAll);
-  if (btnB) btnB.addEventListener("click", clearAll);
-  if (btnA) {
-    btnA.addEventListener("click", () => {
-      if (searchInput) fetchPokemon(searchInput.value);
-    });
-  }
-
-  if (dpadUp) dpadUp.addEventListener("click", randomPokemon);
-  if (dpadDown) dpadDown.addEventListener("click", onShowAll);
-  if (dpadLeft) dpadLeft.addEventListener("click", () => browseById(-1));
-  if (dpadRight) dpadRight.addEventListener("click", () => browseById(1));
-  if (dpadCenter) {
-    dpadCenter.addEventListener("click", () => {
-      if (searchInput && searchInput.value.trim()) {
-        fetchPokemon(searchInput.value);
-      } else if (currentPokemon) {
-        fetchPokemon(currentPokemon.id);
-      } else {
-        fetchPokemon(1);
-      }
-    });
-  }
-
-  // quick region buttons
-  document.querySelectorAll(".quickRegion").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const key = btn.getAttribute("data-region-short");
-      if (!key) return;
-      currentRegion = key;
-      if (regionSelect) regionSelect.value = key;
-      updateQuickRegionButtons();
-      regionList = [];
-      regionDetails = [];
-      showAll = true;
-      renderDataScreen();
-      await prepareRegionList(key);
-      await fetchRegionPage(0);
-    });
-  });
 });
