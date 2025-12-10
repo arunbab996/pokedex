@@ -21,16 +21,27 @@ const TYPE_META = {
   fairy: { label: "Fairy", emoji: "🧚", bg: "from-pink-100 to-pink-300 text-gray-900" }
 };
 
+// Softer frame colours
 const TYPE_FRAME = {
-  fire: "border-orange-300 shadow-[0_0_25px_rgba(248,113,113,0.6)]",
-  water: "border-sky-300 shadow-[0_0_25px_rgba(56,189,248,0.6)]",
-  grass: "border-emerald-300 shadow-[0_0_25px_rgba(52,211,153,0.6)]",
-  electric: "border-yellow-300 shadow-[0_0_25px_rgba(250,204,21,0.7)]",
-  ice: "border-cyan-300 shadow-[0_0_25px_rgba(34,211,238,0.6)]",
-  psychic: "border-pink-300 shadow-[0_0_25px_rgba(244,114,182,0.6)]",
-  dragon: "border-indigo-500 shadow-[0_0_25px_rgba(129,140,248,0.7)]",
-  dark: "border-slate-600 shadow-[0_0_25px_rgba(30,64,175,0.6)]",
-  fairy: "border-pink-200 shadow-[0_0_25px_rgba(251,113,133,0.6)]"
+  fire: "border-orange-200",
+  water: "border-sky-200",
+  grass: "border-emerald-200",
+  electric: "border-yellow-200",
+  ice: "border-cyan-200",
+  psychic: "border-pink-200",
+  dragon: "border-indigo-200",
+  dark: "border-slate-300",
+  fairy: "border-pink-200"
+};
+
+// Uniform stat labels
+const STAT_LABELS = {
+  hp: "HP",
+  attack: "Attack",
+  defense: "Defense",
+  "special-attack": "Sp. Atk",
+  "special-defense": "Sp. Def",
+  speed: "Speed"
 };
 
 const REGIONS = {
@@ -74,6 +85,7 @@ let searchForm,
   randomBtn,
   clearBtn,
   errorBox,
+  mainSection,
   mainCard,
   gridSection,
   gridContainer,
@@ -198,14 +210,15 @@ function renderStatus() {
 function renderMainCard() {
   if (!mainCard) return;
   renderStatus();
+  if (mainSection) mainSection.classList.remove("hidden");
 
   if (!currentPokemon) {
     mainCard.innerHTML = `
       <div>
-        <p class="font-semibold mb-1">Welcome to your Pokédex.</p>
-        <p class="text-xs sm:text-sm max-w-sm mx-auto text-slate-600">
-          Start typing a Pokémon name or ID above, or press <span class="font-semibold">Random</span>.
-          You can also choose a region and hit <span class="font-semibold">Show all</span> to browse cards.
+        <p class="font-semibold mb-1 text-indigo-700">No Pokémon selected</p>
+        <p class="text-xs sm:text-sm max-w-sm mx-auto text-slate-700">
+          Search by name or ID, press <span class="font-semibold">Random</span>,
+          or use the d-pad / keyboard arrows to explore entries.
         </p>
       </div>
     `;
@@ -213,7 +226,7 @@ function renderMainCard() {
   }
 
   const primaryType = currentPokemon.types[0];
-  const frameClass = TYPE_FRAME[primaryType] || "border-amber-200 shadow-xl";
+  const frameClass = TYPE_FRAME[primaryType] || "border-slate-200";
 
   const abilitiesHtml = currentPokemon.abilities
     .map(
@@ -225,19 +238,20 @@ function renderMainCard() {
     .join("");
 
   const statsHtml = currentPokemon.stats
-    .map(
-      (s) => `
+    .map((s) => {
+      const label = STAT_LABELS[s.name] || capitalize(s.name);
+      return `
       <div class="flex items-center gap-3">
-        <div class="w-24 text-xs sm:text-sm capitalize text-slate-700 font-semibold">${s.name}</div>
+        <div class="w-28 text-xs sm:text-sm text-slate-700 font-semibold">${label}</div>
         <div class="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
           <div
             class="h-2 rounded-full"
-            style="width:${Math.min(100, (s.value / 255) * 100)}%; background:linear-gradient(90deg,#34d399,#10b981);"
+            style="width:${Math.min(100, (s.value / 255) * 100)}%; background:linear-gradient(90deg,#22c55e,#16a34a);"
           ></div>
         </div>
         <div class="w-10 text-right font-mono text-xs text-slate-800">${s.value}</div>
-      </div>`
-    )
+      </div>`;
+    })
     .join("");
 
   const movesHtml = currentPokemon.moves
@@ -280,10 +294,10 @@ function renderMainCard() {
       : `<div class="text-xs text-slate-400">No evolution data</div>`;
 
   mainCard.innerHTML = `
-    <div class="grid md:grid-cols-2 gap-5">
+    <div class="grid md:grid-cols-2 gap-5 items-stretch">
       <!-- left: image + basic -->
       <div class="flex flex-col items-center justify-center">
-        <div class="w-full max-w-xs mx-auto bg-white rounded-3xl shadow-2xl border-[5px] ${frameClass} card-flip">
+        <div class="w-full max-w-xs mx-auto bg-white rounded-3xl shadow-xl border-2 ${frameClass} card-flip">
           <div class="p-4 bg-gradient-to-b from-white to-slate-50 flex flex-col items-center">
             <div class="w-full h-48 flex items-center justify-center">
               ${
@@ -354,7 +368,6 @@ function renderMainCard() {
     </div>
   `;
 
-  // attach evo click handlers
   const evoBtns = mainCard.querySelectorAll("[data-evo]");
   evoBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -368,32 +381,40 @@ function renderGrid() {
   if (!gridSection || !gridContainer || !loadMoreBtn) return;
   renderStatus();
 
+  // Right screen is always visible
+  gridSection.classList.remove("hidden");
+
   if (!showAll) {
-    gridSection.classList.add("hidden");
+    // Idle message when not browsing region list
+    gridContainer.innerHTML = `
+      <div class="col-span-full text-xs sm:text-sm text-slate-200 text-center px-2 py-4">
+        Press <span class="font-semibold text-amber-200">Show all</span> to browse cards from this region,
+        or search for a Pokémon to view detailed data in the main screen.
+      </div>
+    `;
+    loadMoreBtn.classList.add("hidden");
     return;
   }
-
-  gridSection.classList.remove("hidden");
 
   gridContainer.innerHTML = regionDetails
     .map((p) => {
       return `
       <div
-        class="bg-white rounded-2xl shadow-md p-3 text-center border border-slate-100 hover:border-amber-300 hover:shadow-lg transition-colors cursor-pointer flex flex-col gap-2"
+        class="bg-slate-900/80 rounded-2xl shadow-md p-3 text-center border border-slate-700 hover:border-amber-300 hover:shadow-lg transition-colors cursor-pointer flex flex-col gap-2"
         data-pname="${p.name}"
       >
-        <div class="w-full h-20 flex items-center justify-center bg-slate-50 rounded-xl">
+        <div class="w-full h-20 flex items-center justify-center bg-slate-800 rounded-xl">
           ${
             p.sprite
               ? `<img src="${p.sprite}" alt="${p.name}" class="w-16 h-16 object-contain" />`
-              : `<div class="w-16 h-16 bg-slate-100 rounded-xl"></div>`
+              : `<div class="w-16 h-16 bg-slate-700 rounded-xl"></div>`
           }
         </div>
         <div>
-          <div class="text-[11px] text-slate-500 font-semibold">
+          <div class="text-[11px] text-slate-300 font-semibold">
             #${String(p.id).padStart(3, "0")}
           </div>
-          <div class="text-xs sm:text-sm font-extrabold capitalize text-slate-800">
+          <div class="text-xs sm:text-sm font-extrabold capitalize text-slate-50">
             ${p.name}
           </div>
         </div>
@@ -401,7 +422,7 @@ function renderGrid() {
           ${p.types
             .map(
               (t) =>
-                `<span class="px-1.5 py-0.5 rounded-full bg-slate-50 text-[10px] capitalize border border-slate-200">${t}</span>`
+                `<span class="px-1.5 py-0.5 rounded-full bg-slate-800 text-[10px] capitalize border border-slate-600">${t}</span>`
             )
             .join("")}
         </div>
@@ -414,30 +435,30 @@ function renderGrid() {
                     (e) => `
                   <button
                     type="button"
-                    class="flex flex-col items-center text-[9px] px-1 py-1 rounded-xl bg-slate-50 border border-slate-200 hover:bg-amber-50"
+                    class="flex flex-col items-center text-[9px] px-1 py-1 rounded-xl bg-slate-800 border border-slate-600 hover:bg-amber-50 hover:text-slate-900"
                     data-evo="${e.name}"
                   >
                     ${
                       e.sprite
                         ? `<img src="${e.sprite}" alt="${e.name}" class="w-6 h-6 object-contain mb-0.5" />`
-                        : `<div class="w-6 h-6 bg-slate-100 rounded mb-0.5"></div>`
+                        : `<div class="w-6 h-6 bg-slate-700 rounded mb-0.5"></div>`
                     }
                     <span class="capitalize max-w-[3rem] truncate">${e.name}</span>
                   </button>`
                   )
                   .join("")}
               </div>`
-            : `<div class="mt-1 text-[10px] text-slate-400">No evolution</div>`
+            : `<div class="mt-1 text-[10px] text-slate-500">No evolution</div>`
         }
         <div class="mt-2 flex items-center justify-center gap-2">
-          <div class="text-[10px] text-slate-500">HP</div>
-          <div class="w-16 bg-rose-100 rounded-full h-2 overflow-hidden">
+          <div class="text-[10px] text-slate-300">HP</div>
+          <div class="w-16 bg-rose-900 rounded-full h-2 overflow-hidden">
             <div
               class="h-2 rounded-full bg-rose-400"
               style="width:${Math.min(100, (p.hp / 255) * 100)}%;"
             ></div>
           </div>
-          <div class="text-[10px] font-mono text-slate-700">${p.hp}</div>
+          <div class="text-[10px] font-mono text-slate-100">${p.hp}</div>
         </div>
       </div>
     `;
@@ -529,7 +550,6 @@ async function fetchPokemon(q) {
     renderMainCard();
     renderGrid();
 
-    // sound
     try {
       const audio = new Audio(CRY_URL);
       audio.volume = 0.3;
@@ -739,7 +759,6 @@ function setupGlobalShortcuts() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // get elements
   searchForm = document.getElementById("searchForm");
   searchInput = document.getElementById("searchInput");
   searchBtn = document.getElementById("searchBtn");
@@ -748,6 +767,7 @@ document.addEventListener("DOMContentLoaded", () => {
   randomBtn = document.getElementById("randomBtn");
   clearBtn = document.getElementById("clearBtn");
   errorBox = document.getElementById("errorBox");
+  mainSection = document.getElementById("mainSection");
   mainCard = document.getElementById("mainCard");
   gridSection = document.getElementById("gridSection");
   gridContainer = document.getElementById("gridContainer");
