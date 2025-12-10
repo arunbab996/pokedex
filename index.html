@@ -14,8 +14,7 @@
 
 <body class="min-h-screen bg-slate-950 text-slate-50">
   <div class="min-h-screen flex flex-col items-center justify-center px-4 py-6">
-
-    <!-- Outer Pokédex Shell -->
+    <!-- Outer Pokédex shell -->
     <div class="w-full max-w-6xl bg-gradient-to-b from-red-600 to-red-800 rounded-[2.5rem] border-[10px] border-red-900 shadow-[0_25px_60px_rgba(0,0,0,0.9)] px-5 py-4 sm:px-8 sm:py-6">
 
       <!-- Top lights -->
@@ -38,9 +37,8 @@
 
       <!-- Header -->
       <header class="bg-amber-50 rounded-full px-4 py-2 sm:px-6 sm:py-3 flex items-center gap-3 shadow-inner border border-amber-200">
-        
         <!-- Pokéball -->
-        <svg width="40" height="40" viewBox="0 0 100 100">
+        <svg width="40" height="40" viewBox="0 0 100 100" class="drop-shadow flex-shrink-0">
           <circle cx="50" cy="50" r="48" fill="#fff" stroke="#000" stroke-width="4"/>
           <defs>
             <clipPath id="pokeClipHeader">
@@ -69,7 +67,6 @@
       <!-- Controls -->
       <section class="mt-4 bg-slate-900/90 rounded-3xl border border-slate-800 px-4 sm:px-6 py-4 shadow-inner">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-
           <!-- Search -->
           <form id="searchForm" class="flex-1">
             <div class="flex gap-3 items-center">
@@ -80,7 +77,6 @@
                   placeholder="Type a Pokémon name (pikachu) or id (25)"
                   class="w-full px-4 py-3 rounded-full border-2 border-yellow-200 focus:outline-none focus:border-yellow-400 shadow-sm bg-slate-950/80 text-sm sm:text-base text-slate-50 placeholder:text-slate-400"
                 />
-
                 <!-- Suggestions -->
                 <ul
                   id="suggestionsList"
@@ -98,10 +94,12 @@
             </div>
           </form>
 
-          <!-- Region + Buttons -->
+          <!-- Region + buttons -->
           <div class="flex flex-wrap gap-2 lg:justify-end">
-
-            <select id="regionSelect" class="px-3 py-2 rounded-2xl border border-slate-600 bg-slate-900/80 shadow-sm text-xs sm:text-sm text-slate-50">
+            <select
+              id="regionSelect"
+              class="px-3 py-2 rounded-2xl border border-slate-600 bg-slate-900/80 shadow-sm text-xs sm:text-sm text-slate-50"
+            >
               <option value="all">All regions</option>
               <option value="kanto">Kanto (1–151)</option>
               <option value="johto">Johto (152–251)</option>
@@ -114,35 +112,46 @@
               <option value="paldea">Paldea (899–1010)</option>
             </select>
 
-            <button id="showAllBtn"
-              class="px-3 py-2 rounded-2xl bg-gradient-to-r from-amber-300 to-orange-400 text-slate-900 text-xs sm:text-sm font-semibold shadow-sm">
+            <button
+              id="showAllBtn"
+              type="button"
+              class="px-3 py-2 rounded-2xl bg-gradient-to-r from-amber-300 to-orange-400 text-slate-900 text-xs sm:text-sm font-semibold shadow-sm"
+            >
               Show all
             </button>
 
-            <button id="randomBtn"
-              class="px-3 py-2 rounded-2xl bg-gradient-to-r from-sky-300 to-emerald-300 text-slate-900 text-xs sm:text-sm font-semibold shadow-sm">
+            <button
+              id="randomBtn"
+              type="button"
+              class="px-3 py-2 rounded-2xl bg-gradient-to-r from-sky-300 to-emerald-300 text-slate-900 text-xs sm:text-sm font-semibold shadow-sm"
+            >
               Random
             </button>
 
-            <button id="clearBtn"
-              class="px-3 py-2 rounded-2xl border border-slate-500 bg-slate-900/80 text-xs sm:text-sm text-slate-100 hover:bg-slate-800">
+            <button
+              id="clearBtn"
+              type="button"
+              class="px-3 py-2 rounded-2xl border border-slate-500 bg-slate-900/80 text-xs sm:text-sm text-slate-100 hover:bg-slate-800"
+            >
               Clear
             </button>
-
           </div>
         </div>
       </section>
 
       <!-- Error -->
-      <div id="errorBox" class="hidden mt-3 mb-2 p-3 rounded-2xl border border-red-400 bg-red-900/80 text-red-50 text-xs sm:text-sm"></div>
+      <div
+        id="errorBox"
+        class="hidden mt-3 mb-2 p-3 rounded-2xl border border-red-400 bg-red-900/80 text-red-50 text-xs sm:text-sm"
+      ></div>
 
-      <!-- Screens Grid -->
+      <!-- Screens grid -->
       <div id="screenGrid" class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
-        <!-- ========== MAIN SCREEN ========== -->
+        <!-- MAIN SCREEN -->
         <section
           id="mainSection"
-          class="bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4 h-[460px] flex flex-col"
+          class="bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4 h-[540px] flex flex-col"
         >
           <div class="text-[10px] text-slate-400 mb-1 tracking-[0.15em] uppercase">
             Main screen
@@ -155,16 +164,16 @@
             <div>
               <p class="font-semibold mb-1 text-indigo-700">No Pokémon selected</p>
               <p class="text-xs sm:text-sm max-w-sm mx-auto text-slate-700">
-                Search by name or ID, press <span class="font-semibold">Random</span>.
+                Search by name or ID, press <span class="font-semibold">Random</span>, or use the d-pad / keyboard arrows.
               </p>
             </div>
           </div>
         </section>
 
-        <!-- ========== DATA SCREEN ========== -->
+        <!-- DATA SCREEN -->
         <section
           id="gridSection"
-          class="bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4 h-[460px] flex flex-col"
+          class="bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4 h-[540px] flex flex-col"
         >
           <div class="flex items-center justify-between mb-2 text-[10px] sm:text-[11px] text-slate-300">
             <span class="tracking-[0.15em] uppercase">Data screen</span>
@@ -172,22 +181,26 @@
           </div>
 
           <p class="text-[10px] sm:text-xs text-slate-300 mb-2">
-            REGION: <span id="statusRegion" class="font-semibold text-yellow-200">All regions</span>
-            &nbsp; MODE: <span id="statusMode" class="font-semibold text-sky-200">IDLE</span>
-            &nbsp; ENTRIES: <span id="statusEntries" class="font-mono text-emerald-200">0/0</span>
+            REGION:
+            <span id="statusRegion" class="font-semibold text-yellow-200">All regions</span>
+            &nbsp;&nbsp; MODE:
+            <span id="statusMode" class="font-semibold text-sky-200">IDLE</span>
+            &nbsp;&nbsp; ENTRIES:
+            <span id="statusEntries" class="font-mono text-emerald-200">0/0</span>
           </p>
 
-          <div class="flex-1 rounded-2xl bg-slate-950/90 border border-slate-700 px-3 sm:px-4 py-3 text-xs sm:text-sm overflow-hidden">
+          <!-- No overflow hidden so stats + moves are never chopped -->
+          <div class="flex-1 rounded-2xl bg-slate-950/90 border border-slate-700 px-3 sm:px-4 py-3 text-xs sm:text-sm">
             <div id="pokemonDataPanel" class="space-y-3 h-full">
-              <!-- JS fills this -->
+              <!-- Filled by JS -->
             </div>
           </div>
         </section>
 
-        <!-- ========== BROWSE SCREEN (iPad mode) ========== -->
+        <!-- BROWSE SCREEN (Show all → iPad grid) -->
         <section
           id="browseSection"
-          class="hidden lg:col-span-2 bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4 h-[460px] flex flex-col"
+          class="hidden lg:col-span-2 bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4 h-[540px] flex flex-col"
         >
           <div class="flex items-center justify-between mb-2 text-[10px] sm:text-[11px] text-slate-300">
             <span class="tracking-[0.15em] uppercase">Browse screen</span>
@@ -195,18 +208,19 @@
           </div>
 
           <p class="text-[10px] sm:text-xs text-slate-300 mb-2">
-            Showing Pokémon for this region. Tap a card to return to entry mode.
+            Showing Pokémon for this region. Tap a card to jump back to entry mode.
           </p>
 
           <div class="flex-1 rounded-2xl bg-slate-950/90 border border-slate-700 px-3 sm:px-4 py-3 overflow-y-auto">
-
-            <div id="gridContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <!-- JS fills this -->
-            </div>
+            <div
+              id="gridContainer"
+              class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+            ></div>
 
             <div class="mt-4 text-center">
               <button
                 id="loadMoreBtn"
+                type="button"
                 class="hidden px-4 py-1.5 rounded-full bg-sky-500 text-white text-[11px] font-semibold shadow-sm"
               >
                 Load more
@@ -214,17 +228,17 @@
             </div>
           </div>
         </section>
-
       </div>
     </div>
 
-    <!-- Footer OUTSIDE Pokédex -->
+    <!-- Footer OUTSIDE the Pokédex shell -->
     <div class="mt-3 text-[10px] sm:text-[11px] text-slate-300 text-center">
       Data from
-      <a href="https://pokeapi.co" class="underline text-sky-300" target="_blank">PokéAPI</a>.
+      <a href="https://pokeapi.co" target="_blank" rel="noreferrer" class="underline text-sky-300">
+        PokéAPI
+      </a>.
       Built as a fun Pokédex web app.
     </div>
-
   </div>
 
   <script src="./pokedex.js"></script>
