@@ -142,12 +142,12 @@
         class="hidden mt-3 mb-2 p-3 rounded-2xl border border-red-400 bg-red-900/80 text-red-50 text-xs sm:text-sm"
       ></div>
 
-      <!-- Dual screens -->
+      <!-- Screens -->
       <div
         id="screenGrid"
         class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"
       >
-        <!-- LEFT: MAIN SCREEN (art + name + type + evo) -->
+        <!-- LEFT: MAIN SCREEN -->
         <section
           id="mainSection"
           class="bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4"
@@ -170,7 +170,7 @@
           </div>
         </section>
 
-        <!-- RIGHT: DATA SCREEN (stats + moves + region grid) -->
+        <!-- RIGHT: DATA SCREEN -->
         <section
           id="gridSection"
           class="bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4"
@@ -180,7 +180,6 @@
             <span class="font-mono text-sky-300">SCAN READY</span>
           </div>
 
-          <!-- Status line -->
           <p class="text-[10px] sm:text-xs text-slate-300 mb-2">
             REGION:
             <span id="statusRegion" class="font-semibold text-yellow-200">All regions</span>
@@ -190,35 +189,50 @@
             <span id="statusEntries" class="font-mono text-emerald-200">0/0</span>
           </p>
 
-          <!-- Dark inner display – no internal scroll, fills like a monitor -->
           <div
             class="rounded-2xl bg-slate-950/90 border border-slate-700 px-3 sm:px-4 py-3 text-xs sm:text-sm"
           >
-            <!-- Pokémon data: abilities + stats + moves -->
-            <div id="pokemonDataPanel" class="space-y-3 mb-4">
-              <!-- JS fills this -->
+            <div id="pokemonDataPanel" class="space-y-3">
+              <!-- Filled by JS -->
             </div>
+          </div>
+        </section>
 
-            <!-- Region grid (used when Show all is active) -->
-            <div id="regionGridWrapper" class="pt-2 border-t border-slate-800/80">
-              <div id="gridContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2"></div>
+        <!-- BROWSE SCREEN (ipad-style) -->
+        <section
+          id="browseSection"
+          class="hidden lg:col-span-2 bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4"
+        >
+          <div class="flex items-center justify-between mb-2 text-[10px] sm:text-[11px] text-slate-300">
+            <span class="tracking-[0.15em] uppercase">Browse screen</span>
+            <span class="font-mono text-sky-300">REGION VIEW</span>
+          </div>
 
-              <div class="mt-3 text-center">
-                <button
-                  id="loadMoreBtn"
-                  type="button"
-                  class="hidden px-4 py-1.5 rounded-full bg-sky-500 text-white text-[11px] font-semibold shadow-sm"
-                >
-                  Load more
-                </button>
-              </div>
+          <p class="text-[10px] sm:text-xs text-slate-300 mb-2">
+            Showing Pokémon cards for the selected region. Tap a card to jump back to entry view.
+          </p>
+
+          <div class="rounded-2xl bg-slate-950/90 border border-slate-700 px-3 sm:px-4 py-3">
+            <div
+              id="gridContainer"
+              class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+            ></div>
+
+            <div class="mt-4 text-center">
+              <button
+                id="loadMoreBtn"
+                type="button"
+                class="hidden px-4 py-1.5 rounded-full bg-sky-500 text-white text-[11px] font-semibold shadow-sm"
+              >
+                Load more
+              </button>
             </div>
           </div>
         </section>
       </div>
     </div>
 
-    <!-- Footer OUTSIDE the Pokédex shell for more vertical space -->
+    <!-- Footer OUTSIDE the Pokédex shell -->
     <div class="mt-3 text-[10px] sm:text-[11px] text-slate-300 text-center">
       Data from
       <a href="https://pokeapi.co" target="_blank" rel="noreferrer" class="underline text-sky-300">
