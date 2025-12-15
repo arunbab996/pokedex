@@ -5,22 +5,16 @@
   <title>Pokédex</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-
   <!-- Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Custom styles -->
+  <!-- Custom styles (your pokedex.css) -->
   <link rel="stylesheet" href="./pokedex.css" />
 </head>
 
-<body class="h-screen overflow-hidden bg-slate-950 text-slate-50">
-
-  <!-- App wrapper locked to viewport -->
-  <div class="relative h-full flex items-center justify-center px-4">
-
-    <!-- Pokédex shell -->
+<body class="min-h-screen bg-slate-950 text-slate-50">
+  <div class="min-h-screen flex flex-col items-center justify-center px-4 py-6">
+    <!-- Outer Pokédex shell -->
     <div class="w-full max-w-6xl bg-gradient-to-b from-red-600 to-red-800 rounded-[2.5rem] border-[10px] border-red-900 shadow-[0_25px_60px_rgba(0,0,0,0.9)] px-5 py-4 sm:px-8 sm:py-6">
 
       <!-- Top lights -->
@@ -28,35 +22,52 @@
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sky-300 to-sky-600 border-[3px] border-sky-100 shadow-inner"></div>
           <div class="flex gap-2">
-            <div class="w-3 h-3 rounded-full bg-green-400"></div>
-            <div class="w-3 h-3 rounded-full bg-yellow-300"></div>
-            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+            <div class="w-3 h-3 rounded-full bg-green-400 shadow-sm"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-300 shadow-sm"></div>
+            <div class="w-3 h-3 rounded-full bg-red-400 shadow-sm"></div>
           </div>
+        </div>
+
+        <div class="hidden sm:flex gap-2 opacity-70">
+          <div class="w-10 h-3 rounded bg-slate-950/60"></div>
+          <div class="w-10 h-3 rounded bg-slate-950/60"></div>
+          <div class="w-10 h-3 rounded bg-slate-950/60"></div>
         </div>
       </div>
 
       <!-- Header -->
-      <header class="bg-amber-50 rounded-full px-6 py-3 flex items-center gap-3 shadow-inner border border-amber-200">
-        <svg width="40" height="40" viewBox="0 0 100 100">
+      <header class="bg-amber-50 rounded-full px-4 py-2 sm:px-6 sm:py-3 flex items-center gap-3 shadow-inner border border-amber-200">
+        <!-- Pokéball -->
+        <svg width="40" height="40" viewBox="0 0 100 100" class="drop-shadow flex-shrink-0">
           <circle cx="50" cy="50" r="48" fill="#fff" stroke="#000" stroke-width="4"/>
-          <rect x="4" y="4" width="92" height="46" fill="#ff0000"/>
-          <rect x="4" y="50" width="92" height="46" fill="#ffffff"/>
-          <rect x="4" y="46" width="92" height="8" fill="#000"/>
+          <defs>
+            <clipPath id="pokeClipHeader">
+              <circle cx="50" cy="50" r="46"/>
+            </clipPath>
+          </defs>
+          <g clip-path="url(#pokeClipHeader)">
+            <rect x="4" y="4" width="92" height="46" fill="#ff0000"/>
+            <rect x="4" y="50" width="92" height="46" fill="#ffffff"/>
+            <rect x="4" y="46" width="92" height="8" fill="#000000"/>
+          </g>
           <circle cx="50" cy="50" r="14" fill="#fff" stroke="#000" stroke-width="4"/>
           <circle cx="50" cy="50" r="6" fill="#000"/>
         </svg>
 
         <div>
-          <h1 class="text-3xl font-extrabold text-rose-700">Pokédex</h1>
-          <p class="text-sm text-slate-700">
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-rose-700">
+            Pokédex
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-700">
             Web Pokédex — like the handheld, but bigger and brighter ✨
           </p>
         </div>
       </header>
 
       <!-- Controls -->
-      <section class="mt-4 bg-slate-900/90 rounded-3xl border border-slate-800 px-6 py-4 shadow-inner">
+      <section class="mt-4 bg-slate-900/90 rounded-3xl border border-slate-800 px-4 sm:px-6 py-4 shadow-inner">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <!-- Search -->
           <form id="searchForm" class="flex-1">
             <div class="flex gap-3 items-center">
               <div class="relative flex-1">
@@ -64,23 +75,31 @@
                   id="searchInput"
                   type="text"
                   placeholder="Type a Pokémon name (pikachu) or id (25)"
-                  class="w-full px-4 py-3 rounded-full border-2 border-yellow-200 bg-slate-950/80 text-slate-50"
+                  class="w-full px-4 py-3 rounded-full border-2 border-yellow-200 focus:outline-none focus:border-yellow-400 shadow-sm bg-slate-950/80 text-sm sm:text-base text-slate-50 placeholder:text-slate-400"
                 />
+                <!-- Suggestions -->
                 <ul
                   id="suggestionsList"
-                  class="hidden absolute left-0 right-0 mt-1 bg-slate-900 rounded-2xl border border-pink-300/60 shadow-lg max-h-56 overflow-auto text-sm z-30"
+                  class="hidden absolute left-0 right-0 mt-1 bg-slate-900 rounded-2xl border border-pink-300/60 shadow-lg max-h-56 overflow-auto text-xs sm:text-sm z-30 text-slate-50"
                 ></ul>
               </div>
-              <button id="searchBtn" type="submit"
-                class="px-4 py-2 rounded-2xl bg-gradient-to-r from-rose-500 to-red-500 text-white font-semibold">
+
+              <button
+                id="searchBtn"
+                type="submit"
+                class="px-4 py-2 rounded-2xl bg-gradient-to-r from-rose-500 to-red-500 text-white text-sm sm:text-base font-semibold shadow-md hover:scale-105 transition-transform"
+              >
                 Search
               </button>
             </div>
           </form>
 
-          <div class="flex gap-2">
-            <select id="regionSelect"
-              class="px-3 py-2 rounded-2xl border border-slate-600 bg-slate-900 text-slate-50">
+          <!-- Region + buttons -->
+          <div class="flex flex-wrap gap-2 lg:justify-end">
+            <select
+              id="regionSelect"
+              class="px-3 py-2 rounded-2xl border border-slate-600 bg-slate-900/80 shadow-sm text-xs sm:text-sm text-slate-50"
+            >
               <option value="all">All regions</option>
               <option value="kanto">Kanto (1–151)</option>
               <option value="johto">Johto (152–251)</option>
@@ -93,34 +112,130 @@
               <option value="paldea">Paldea (899–1010)</option>
             </select>
 
-            <button id="showAllBtn" class="px-3 py-2 rounded-2xl bg-amber-300 text-slate-900">Show all</button>
-            <button id="randomBtn" class="px-3 py-2 rounded-2xl bg-sky-300 text-slate-900">Random</button>
-            <button id="clearBtn" class="px-3 py-2 rounded-2xl border border-slate-500 text-slate-100">Clear</button>
+            <button
+              id="showAllBtn"
+              type="button"
+              class="px-3 py-2 rounded-2xl bg-gradient-to-r from-amber-300 to-orange-400 text-slate-900 text-xs sm:text-sm font-semibold shadow-sm"
+            >
+              Show all
+            </button>
+
+            <button
+              id="randomBtn"
+              type="button"
+              class="px-3 py-2 rounded-2xl bg-gradient-to-r from-sky-300 to-emerald-300 text-slate-900 text-xs sm:text-sm font-semibold shadow-sm"
+            >
+              Random
+            </button>
+
+            <button
+              id="clearBtn"
+              type="button"
+              class="px-3 py-2 rounded-2xl border border-slate-500 bg-slate-900/80 text-xs sm:text-sm text-slate-100 hover:bg-slate-800"
+            >
+              Clear
+            </button>
           </div>
         </div>
       </section>
 
-      <!-- Screens -->
-      <div class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 h-[600px]">
-        <section id="mainSection"
-          class="bg-slate-900 rounded-3xl border-2 border-slate-800 px-5 py-4">
-          <div id="mainCard"
-            class="h-full rounded-2xl bg-gradient-to-br from-amber-50 via-pink-50 to-sky-50 flex items-center justify-center">
+      <!-- Error -->
+      <div
+        id="errorBox"
+        class="hidden mt-3 mb-2 p-3 rounded-2xl border border-red-400 bg-red-900/80 text-red-50 text-xs sm:text-sm"
+      ></div>
+
+      <!-- Screens grid -->
+      <div id="screenGrid" class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+
+        <!-- MAIN SCREEN -->
+        <section
+          id="mainSection"
+          class="bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4 h-[600px] flex flex-col"
+        >
+          <div class="text-[10px] text-slate-400 mb-1 tracking-[0.15em] uppercase">
+            Main screen
+          </div>
+
+          <div
+            id="mainCard"
+            class="flex-1 rounded-2xl bg-gradient-to-br from-amber-50 via-pink-50 to-sky-50 border border-slate-200 flex items-center justify-center text-center text-slate-700 text-sm sm:text-base px-4 py-4"
+          >
+            <div>
+              <p class="font-semibold mb-1 text-indigo-700">No Pokémon selected</p>
+              <p class="text-xs sm:text-sm max-w-sm mx-auto text-slate-700">
+                Search by name or ID, press <span class="font-semibold">Random</span>, or use the d-pad / keyboard arrows.
+              </p>
+            </div>
           </div>
         </section>
 
-        <section id="gridSection"
-          class="bg-slate-900 rounded-3xl border-2 border-slate-800 px-5 py-4 flex flex-col">
-          <div class="flex-1 rounded-2xl bg-slate-950/90 border border-slate-700 px-4 py-3">
-            <div id="pokemonDataPanel" class="h-full"></div>
+        <!-- DATA SCREEN -->
+        <section
+          id="gridSection"
+          class="bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4 h-[600px] flex flex-col"
+        >
+          <div class="flex items-center justify-between mb-2 text-[10px] sm:text-[11px] text-slate-300">
+            <span class="tracking-[0.15em] uppercase">Data screen</span>
+            <span class="font-mono text-sky-300">SCAN READY</span>
+          </div>
+
+          <p class="text-[10px] sm:text-xs text-slate-300 mb-2">
+            REGION:
+            <span id="statusRegion" class="font-semibold text-yellow-200">All regions</span>
+            &nbsp;&nbsp; MODE:
+            <span id="statusMode" class="font-semibold text-sky-200">IDLE</span>
+            &nbsp;&nbsp; ENTRIES:
+            <span id="statusEntries" class="font-mono text-emerald-200">0/0</span>
+          </p>
+
+          <div class="flex-1 rounded-2xl bg-slate-950/90 border border-slate-700 px-3 sm:px-4 py-3 text-xs sm:text-sm">
+            <div id="pokemonDataPanel" class="space-y-3 h-full">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- BROWSE SCREEN -->
+        <section
+          id="browseSection"
+          class="hidden lg:col-span-2 bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-[0_0_40px_rgba(15,23,42,0.9)] px-4 sm:px-5 py-4 h-[600px] flex flex-col"
+        >
+          <div class="flex items-center justify-between mb-2 text-[10px] sm:text-[11px] text-slate-300">
+            <span class="tracking-[0.15em] uppercase">Browse screen</span>
+            <span class="font-mono text-sky-300">REGION VIEW</span>
+          </div>
+
+          <p class="text-[10px] sm:text-xs text-slate-300 mb-2">
+            Showing Pokémon for this region. Tap a card to jump back to entry mode.
+          </p>
+
+          <div class="flex-1 rounded-2xl bg-slate-950/90 border border-slate-700 px-3 sm:px-4 py-3 overflow-y-auto">
+            <div
+              id="gridContainer"
+              class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+            ></div>
+
+            <div class="mt-4 text-center">
+              <button
+                id="loadMoreBtn"
+                type="button"
+                class="hidden px-4 py-1.5 rounded-full bg-sky-500 text-white text-[11px] font-semibold shadow-sm"
+              >
+                Load more
+              </button>
+            </div>
           </div>
         </section>
       </div>
     </div>
 
-    <!-- Footer overlay (no scroll) -->
-    <div class="absolute bottom-2 w-full text-center text-[11px] text-slate-400">
-      Data from <a href="https://pokeapi.co" target="_blank" class="underline text-sky-300">PokéAPI</a>.
+    <!-- Footer -->
+    <div class="mt-3 text-[10px] sm:text-[11px] text-slate-300 text-center">
+      Data from
+      <a href="https://pokeapi.co" target="_blank" rel="noreferrer" class="underline text-sky-300">
+        PokéAPI
+      </a>.
       Built as a fun Pokédex web app.
     </div>
   </div>
