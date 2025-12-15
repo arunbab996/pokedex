@@ -55,12 +55,7 @@
   );
 }
 
-/* Prevent layout jump */
-#mainCard {
-  min-height: 100%;
-}
-
-/* Scrollbars only for internal grid */
+/* scrollbars for grid */
 #gridContainer::-webkit-scrollbar {
   width: 6px;
 }
